@@ -1,24 +1,19 @@
 import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../context/AuthContext";
-import OrderType from "../../types/OrderType";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-
 function Orders() {
-
     const { isAuthenticated, jwtToken, usertype } = useAuth();
-    const navigate = useNavigate()
-
-    const [orders, setOrders] = useState<OrderType[]>([]);
+    const navigate = useNavigate();
+    const [orders, setOrders] = useState([]);
     
-
     const config = {
         headers: {
             Authorization: `Bearer ${jwtToken}`
         }
-    }
+    };
 
     useEffect(function () {
         if (isAuthenticated) {
@@ -27,7 +22,7 @@ function Orders() {
             }
             getOrders();
         }
-    }, [isAuthenticated])
+    }, [isAuthenticated]);
 
     async function getOrders() {
         try {
@@ -64,7 +59,7 @@ function Orders() {
                                 <tbody>
                                     {orders.map(function (order) {
                                         return (
-                                            <tr className="bg-white border-2 border-violet-600 rounded-lg">
+                                            <tr key={order.id} className="bg-white border-2 border-violet-600 rounded-lg">
                                                 <td scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap  border-2 border-violet-600 rounded-lg pl-20">
                                                     {order.id}
                                                 </td>
@@ -75,17 +70,16 @@ function Orders() {
                                                     {order.orderTotal}
                                                 </td>
                                             </tr>
-                                        )
+                                        );
                                     })}
                                 </tbody>
                             </table>
                         </div>
-
                     </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
 export default Orders;

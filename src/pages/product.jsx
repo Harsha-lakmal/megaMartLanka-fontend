@@ -1,31 +1,28 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
-import CategoryType from "../types/CategoryType";
-import ProductType from "../types/ProductType";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function Product() {
+    const { isAuthenticated, jwtToken, usertype } = useAuth();
+    const navigate = useNavigate();
 
-    const { isAuthenticated, jwtToken , usertype} = useAuth();
-    const navigate = useNavigate()
+    const [categories, setCategories] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [editingProduct, setEditingProduct] = useState(null);
 
-    const [categories, setCategories] = useState<CategoryType[]>([]);
-    const [products, setProducts] = useState<ProductType[]>([]);
-    const [editingProduct, setEditingProduct] = useState<ProductType | null>(null);
-
-    const [productName, setProductName] = useState<string>("");
-    const [productDescription, setProductDescription] = useState<string>("");
-    const [productPrice, setProductPrice] = useState<number>(0.0);
-    const [categoryId, setCategoryId] = useState<number>(0);
-    const [error, setError] = useState<string>("")
+    const [productName, setProductName] = useState("");
+    const [productDescription, setProductDescription] = useState("");
+    const [productPrice, setProductPrice] = useState(0.0);
+    const [categoryId, setCategoryId] = useState(0);
+    const [error, setError] = useState("");
 
     const config = {
         headers: {
             Authorization: `Bearer ${jwtToken}`
         }
-    }
+    };
 
     useEffect(function () {
         if (isAuthenticated) {
@@ -35,8 +32,7 @@ function Product() {
             getProducts();
             getCategory();
         }
-    }, [isAuthenticated])
-
+    }, [isAuthenticated]);
 
     async function getCategory() {
         try {
@@ -63,7 +59,7 @@ function Product() {
                 description: productDescription,
                 price: productPrice,
                 categoryId: categoryId
-            }
+            };
             try {
                 const response = await axios.post("http://localhost:8085/items", data, config);
                 console.log(response.data);
@@ -76,7 +72,6 @@ function Product() {
     }
 
     async function updateProduct() {
-
         if (usertype?.includes("store")) {
             setError("You are not authorized to edit product");
             setEditingProduct(null);
@@ -88,7 +83,7 @@ function Product() {
                     description: productDescription,
                     price: productPrice,
                     categoryId: categoryId
-                }
+                };
                 try {
                     const response = await axios.put(`http://localhost:8085/items/${editingProduct?.id}`, data, config);
                     console.log(response.data);
@@ -99,14 +94,13 @@ function Product() {
                 }
             }
         }
-
     }
 
-    async function deleteProduct(productId: number) {
+    async function deleteProduct(productId) {
         if (usertype?.includes("store")) {
             setError("You are not authorized to delete product");
             clear();
-        }else {
+        } else {
             try {
                 await axios.delete(`http://localhost:8085/items/${productId}`, config);
                 getProducts();
@@ -124,7 +118,6 @@ function Product() {
         setEditingProduct(null);
     }
 
-    
     function checkEmpty() {
         if (productName === "" || productDescription === "" || productPrice === 0 || productPrice === 0.0 || categoryId === 0) {
             setError("Fields can't be Empty..");
@@ -135,20 +128,18 @@ function Product() {
         }
     }
 
-    function handlePrice(e: any) {
+    function handlePrice(e) {
         setProductPrice(e.target.value);
         setError("");
     }
 
-    function getEditProduct(product: ProductType) {
+    function getEditProduct(product) {
         setEditingProduct(product);
         setProductName(product.name);
         setProductDescription(product.description);
         setProductPrice(product.price);
         setCategoryId(product.category.id);
     }
-
-    //(e) => { setProductPrice(parseFloat(e.target.value)); setError(""); }
 
     return (
         <div>
@@ -163,20 +154,19 @@ function Product() {
                                 <input type="text" onChange={(e) => { setProductDescription(e.target.value); setError(""); }} value={productDescription} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2 " placeholder="Enter Product Description" />
                                 <input type="text" onChange={handlePrice} value={productPrice} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2 " placeholder="Enter Price" />
                                 <select className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2" onChange={(e) => { setCategoryId(parseInt(e.target.value)); setError(""); }} value={categoryId}>
-                                    
-                                    {productName === "" ? (<option value="">Select Category</option>):(<option value={0}>Select Category</option>)}
-                                    {
-                                        categories.map(function (category) {
-                                            return (
-                                                <option value={category.id}>{category.name}</option>
-                                            )
-                                        })
-                                    }
+                                    {productName === "" ? (<option value="">Select Category</option>) : (<option value={0}>Select Category</option>)}
+                                    {categories.map(function (category) {
+                                        return (
+                                            <option key={category.id} value={category.id}>{category.name}</option>
+                                        );
+                                    })}
                                 </select>
                             </form>
-                            {editingProduct ? (<button type="button" onClick={updateProduct} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Update</button>) :
-                                (<button type="button" onClick={handleSubmit} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Save</button>)
-                            }
+                            {editingProduct ? (
+                                <button type="button" onClick={updateProduct} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Update</button>
+                            ) : (
+                                <button type="button" onClick={handleSubmit} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Save</button>
+                            )}
                         </div>
                         <div className="text-sm text-red-600">{error}</div>
                     </div>
@@ -206,37 +196,36 @@ function Product() {
                                     </thead>
                                     <tbody>
                                         {products.map(function (product) {
-                                            return (<tr className="bg-white border-2 border-violet-600 rounded-lg">
-                                                <td scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap  border-2 border-violet-600 rounded-lg">
-                                                    {product.name}
-                                                </td>
-                                                <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                    {product.description}
-                                                </td>
-                                                <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                    {product.category.name}
-                                                </td>
-                                                <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                    {product.price}
-                                                </td>
-                                                <td className="pe-4 py-4 text-right border-2 border-violet-600 rounded-lg">
-                                                    <button type="button" onClick={() => getEditProduct(product)} className="w-20 md:me-1 py-1 bg-gradient-to-r from-green-300 via-green-500 to-green-700 hover:bg-gradient-to-br md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:border-black">Edit</button>
-                                                    <button type="button" onClick={() => deleteProduct(product.id)} className="w-20 py-1 bg-gradient-to-r from-red-800 to-pink-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l  hover:border-black">Delete</button>
-                                                </td>
-                                            </tr>)
+                                            return (
+                                                <tr key={product.id} className="bg-white border-2 border-violet-600 rounded-lg">
+                                                    <td scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap  border-2 border-violet-600 rounded-lg">
+                                                        {product.name}
+                                                    </td>
+                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
+                                                        {product.description}
+                                                    </td>
+                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
+                                                        {product.category.name}
+                                                    </td>
+                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
+                                                        {product.price}
+                                                    </td>
+                                                    <td className="pe-4 py-4 text-right border-2 border-violet-600 rounded-lg">
+                                                        <button type="button" onClick={() => getEditProduct(product)} className="w-20 md:me-1 py-1 bg-gradient-to-r from-green-300 via-green-500 to-green-700 hover:bg-gradient-to-br md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:border-black">Edit</button>
+                                                        <button type="button" onClick={() => deleteProduct(product.id)} className="w-20 py-1 bg-gradient-to-r from-red-800 to-pink-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l  hover:border-black">Delete</button>
+                                                    </td>
+                                                </tr>
+                                            );
                                         })}
                                     </tbody>
                                 </table>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
-
-    )
+    );
 }
 
 export default Product;
