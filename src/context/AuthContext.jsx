@@ -1,24 +1,21 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import AuthContextType from "../types/AuthContextType";
-import AuthProviderPropsType from "../types/AuthProviderPropsType";
-import AuthResponseType from "../types/AuthResponseType";
 
-export const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext({
     isAuthenticated: false,
     jwtToken: null,
     loading: true,
-    usertype:null,
+    usertype: null,
     login: () => {},
     logout: () => {}
 });
 
-export function AuthProvider({children}: AuthProviderPropsType ) {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [jwtToken, setJwtToken] = useState<string | null>(null);
-    const [usertype, setUsertype] = useState<string | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+export function AuthProvider({children}) {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [jwtToken, setJwtToken] = useState(null);
+    const [usertype, setUsertype] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    function login(dto: AuthResponseType) {
+    function login(dto) {
         setIsAuthenticated(true);
         setJwtToken(dto.jwtToken);
         setUsertype(dto.usertype);
@@ -29,8 +26,6 @@ export function AuthProvider({children}: AuthProviderPropsType ) {
         if(dto.usertype != null) {
             localStorage.setItem("user", dto.usertype);
         }
-        
-        
     }
 
     function logout() {
