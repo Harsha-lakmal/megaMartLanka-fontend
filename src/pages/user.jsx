@@ -1,23 +1,21 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
-import UserType from "../types/UserType";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function User() {
-
-    const { isAuthenticated, jwtToken , usertype } = useAuth();
-    const navigate = useNavigate()
+    const { isAuthenticated, jwtToken, usertype } = useAuth();
+    const navigate = useNavigate();
     
-    const [users, setUsers] = useState<UserType[]>([]);
-    const [fullname, setFullName] = useState<string>("");
-    const [username, setUsername] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
-    const [userType, setUserType] = useState<string>("");
-    const [userId, setUserId] = useState<number>(0);
-    const [Error, setError] = useState<string>("");
-    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [users, setUsers] = useState([]);
+    const [fullname, setFullName] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [userType, setUserType] = useState("");
+    const [userId, setUserId] = useState(0);
+    const [Error, setError] = useState("");
+    const [isEditing, setIsEditing] = useState(false);
 
     const config = {
         headers: {
@@ -32,7 +30,6 @@ function User() {
             }
             getUsers();
             console.log(usertype);
-            
         }
     }, [isAuthenticated])
 
@@ -80,8 +77,7 @@ function User() {
         }
     }
 
-    async function deleteUser(user: UserType) {
-
+    async function deleteUser(user) {
         if (user.userType.includes("admin") && usertype?.includes("manager")) {
             setError("You are not authorized to delete admin user.");
         } else if(user.userType.includes("admin") && usertype?.includes("admin")) {
@@ -112,15 +108,11 @@ function User() {
                 console.log(error);
             }
         }
-
-        
     }
-
 
     function checkEmpty() {
         if (fullname == "" || username == "" || password == "" || userType == "") {
             return false;
-
         } else {
             return true;
         }
@@ -145,7 +137,7 @@ function User() {
         setIsEditing(false);
     }
 
-    function updatingUser(user: UserType) {
+    function updatingUser(user) {
         setIsEditing(true);
         setFullName(user.fullname);
         setUsername(user.username);
@@ -183,7 +175,6 @@ function User() {
                                     <option value="chashier">Cashier</option>
                                 </select>
                                 )}
-                                
                             </form>
                             {isEditing ? (
                                 <button type="button" onClick={() => {
@@ -210,7 +201,6 @@ function User() {
                                     }
                                 }} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Save</button>
                             )}
-
                         </div>
                         <div className="text-red-500 text-sm">{Error}</div>
                     </div>
@@ -240,36 +230,35 @@ function User() {
                                     </thead>
                                     <tbody>
                                         {users.map(function (user) {
-                                            return (<tr className="bg-white border-2 border-violet-600 rounded-lg">
-                                                <td scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap  border-2 border-violet-600 rounded-lg">
-                                                    {user.fullname}
-                                                </td>
-                                                <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                    {user.username}
-                                                </td>
-                                                <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                    {user.password}
-                                                </td>
-                                                <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                    {user.userType}
-                                                </td>
-                                                <td className="pe-4 py-4 text-right border-2 border-violet-600 rounded-lg">
-                                                    <button type="button" onClick={()=>{setError("");updatingUser(user)}} className="w-20 md:me-1 py-1 bg-gradient-to-r from-green-600  to-lime-400 hover:bg-gradient-to-l md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:border-black">Edit</button>
-                                                    <button type="button" onClick={()=>{setError("");deleteUser(user)}} className="w-20 py-1 bg-gradient-to-r from-red-600 to-pink-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l  hover:border-black">Delete</button>
-                                                </td>
-                                            </tr>)
+                                            return (
+                                                <tr className="bg-white border-2 border-violet-600 rounded-lg" key={user.id}>
+                                                    <td scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap  border-2 border-violet-600 rounded-lg">
+                                                        {user.fullname}
+                                                    </td>
+                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
+                                                        {user.username}
+                                                    </td>
+                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
+                                                        {user.password}
+                                                    </td>
+                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
+                                                        {user.userType}
+                                                    </td>
+                                                    <td className="pe-4 py-4 text-right border-2 border-violet-600 rounded-lg">
+                                                        <button type="button" onClick={()=>{setError("");updatingUser(user)}} className="w-20 md:me-1 py-1 bg-gradient-to-r from-green-600  to-lime-400 hover:bg-gradient-to-l md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:border-black">Edit</button>
+                                                        <button type="button" onClick={()=>{setError("");deleteUser(user)}} className="w-20 py-1 bg-gradient-to-r from-red-600 to-pink-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l  hover:border-black">Delete</button>
+                                                    </td>
+                                                </tr>
+                                            )
                                         })}
-
                                     </tbody>
                                 </table>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     )
 }
 
