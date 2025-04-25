@@ -23,7 +23,7 @@ function Login() {
         };
         
         try {
-            const response = await axios.post("http://localhost:8085/auth/login", data);
+            const response = await axios.post("http://localhost:8080/auth/login", data);
             console.log(response.data);
             
             login(response.data);

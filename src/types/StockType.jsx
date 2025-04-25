@@ -3,7 +3,7 @@ import ProductType from './ProductType';
 
 const StockType = PropTypes.shape({
   id: PropTypes.number.isRequired,
-  item: ProductType.isRequired,  // Assuming ProductType is defined with PropTypes
+  item: ProductType.isRequired,  
   qoh: PropTypes.number.isRequired
 });
 

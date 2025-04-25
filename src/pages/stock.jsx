@@ -17,11 +17,11 @@ function Stock() {
     const [stockId, setStockId] = useState(0);
     const [productId, setProductId] = useState(0);
     const [qty, setQty] = useState(0);
-    const [products, setProducts] = useState<ProductType[]>([]);
-    const [stockAvailable, setStockAvailable] = useState<StockType[]>([]);
-    const [newProducts, setNewProducts] = useState<ProductType[]>([]);
-    const [stockOrder, setStockOrder] = useState<StockType[]>([]);
-    const [stockDtos, setStockDtos] = useState<StockDtoType[]>([]);
+    const [products, setProducts] = useState([]);
+    const [stockAvailable, setStockAvailable] = useState([]);
+    const [newProducts, setNewProducts] = useState([]);
+    const [stockOrder, setStockOrder] = useState([]);
+    const [stockDtos, setStockDtos] = useState([]);
     const [Error, setError] = useState("");
 
     const config = {
@@ -126,8 +126,8 @@ function Stock() {
         }
     }
 
-    function filterNewProducts(): ProductType[] {
-        let items: ProductType[] = [];
+    function filterNewProducts() {
+        let items = [];
 
         for (let i = 0; i < products.length; i++) {
             const product = products[i];
@@ -140,11 +140,11 @@ function Stock() {
         return items;
     }
 
-    function addToStockOrder(stock: StockType) {
+    function addToStockOrder(stock) {
         stock.qoh = qty;
         stockOrder.push(stock);
 
-        const stockDto: StockDtoType = {
+        const stockDto = {
             id: stock.id,
             qty: stock.qoh
         };
@@ -152,7 +152,7 @@ function Stock() {
         stockDtos.push(stockDto);
     }
 
-    function removeFromStockOrder(stock: StockType) {
+    function removeFromStockOrder(stock) {
         stockOrder.splice(stockOrder.indexOf(stock), 1);
         
         for (let i = 0; i < stockDtos.length; i++) {
