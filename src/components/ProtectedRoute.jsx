@@ -5,14 +5,14 @@ function ProtectedRoute() {
     const { isAuthenticated, loading } = useAuth();
 
     if (loading) {
-        return null; // or return a loading spinner component
+        return null; 
     }
     
     if (isAuthenticated) {
         return <Outlet />;
     }
     
-    return <Navigate to="/auth/login" />;
+    return <Navigate to="/login" />;
 }
 
 export default ProtectedRoute;

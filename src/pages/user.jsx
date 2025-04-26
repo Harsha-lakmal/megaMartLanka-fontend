@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import instance  from "../Service/AxiosHolder/AxiosHolder";
 
 function User() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
@@ -35,7 +36,7 @@ function User() {
 
     async function getUsers() {
         try {
-            const response = await axios.get("http://localhost:8085/users", config);
+            const response = await instance.get("/users", config);
             setUsers(response.data);
         } catch (error) {
             console.log(error);
@@ -51,7 +52,7 @@ function User() {
         }
         
         try {
-            const response = await axios.post("http://localhost:8085/users", data, config);
+            const response = await instance.post("/users", data, config);
             console.log(response.data);
             getUsers();
             clear();
@@ -68,7 +69,7 @@ function User() {
             userType: userType
         }
         try {
-            const response = await axios.put(`http://localhost:8085/users/${userId}`, data, config);
+            const response = await instance.put(`/users/${userId}`, data, config);
             console.log(response.data);
             getUsers();
             clear();
@@ -90,7 +91,7 @@ function User() {
 
             if(count > 1){
                 try {
-                    await axios.delete(`http://localhost:8085/users/${user.id}`, config);
+                    await instance.delete(`/users/${user.id}`, config);
                     getUsers();
                     clear();
                 } catch (error) {
@@ -101,7 +102,7 @@ function User() {
             }
         } else {
             try {
-                await axios.delete(`http://localhost:8085/users/${user.id}`, config);
+                await instance.delete(`/users/${user.id}`, config);
                 getUsers();
                 clear();
             } catch (error) {

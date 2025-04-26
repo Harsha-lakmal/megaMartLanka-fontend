@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import instance from "../Service/AxiosHolder/AxiosHolder";
 
 function Category() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
@@ -29,7 +30,7 @@ function Category() {
 
     async function getCategory() {
         try {
-            const response = await axios.get("http://localhost:8085/category", config);
+            const response = await instance.get("/category", config);
             setCategories(response.data);
         } catch (error) {
             console.log(error);
@@ -44,7 +45,7 @@ function Category() {
                 name: catName
             }
             try {
-                const response = await axios.post("http://localhost:8085/category", data, config);
+                const response = await instance.post("/category", data, config);
                 console.log(response);
                 getCategory();
                 setCatName("");

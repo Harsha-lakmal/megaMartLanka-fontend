@@ -17,6 +17,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<ProtectedRoute />}>
+          <Route path='/*' element={<Login />} />
             <Route path='/' element={<Home />} />
             <Route path='/category' element={<Category />} />
             <Route path='/product' element={<Product />} />
@@ -26,7 +27,7 @@ function App() {
             <Route path='/stock' element={<Stock />} />
             <Route path='/user' element={<User />} />
           </Route>
-          <Route path='/auth/login' element={<Login />} />
+          <Route path='/login' element={<Login />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

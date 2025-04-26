@@ -6,6 +6,7 @@ import StockType from "../types/StockType";
 import axios from "axios";
 import StockDtoType from "../types/StockDtoType";
 import { useNavigate } from "react-router-dom";
+import instance from "../Service/AxiosHolder/AxiosHolder";
 
 function Stock() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
@@ -55,7 +56,7 @@ function Stock() {
 
     async function getStockAvailable() {
         try {
-            const resonse = await axios.get("http://localhost:8085/stock", config);
+            const resonse = await instance.get("/stock", config);
             setStockAvailable(resonse.data);
         } catch (error) {
             console.log(error);
@@ -64,7 +65,7 @@ function Stock() {
 
     async function getProducts() {
         try {
-            const resonse = await axios.get("http://localhost:8085/items", config);
+            const resonse = await instance.get("/items", config);
             setProducts(resonse.data);
         } catch (error) {
             console.log(error);
@@ -78,7 +79,7 @@ function Stock() {
         };
 
         try {
-            const resonse = await axios.post("http://localhost:8085/stock", data, config);
+            const resonse = await instance.post("/stock", data, config);
             console.log(resonse.data);
             getStockAvailable();
             setQty(0);
@@ -97,7 +98,7 @@ function Stock() {
             };
     
             try {
-                const resonse = await axios.put("http://localhost:8085/stock", data, config);
+                const resonse = await instance.put("/stock", data, config);
                 console.log(resonse.data);
                 getStockAvailable();
                 setQty(0);
@@ -116,7 +117,7 @@ function Stock() {
         const data = stockDtos;
 
         try {
-            const resonse = await axios.put("http://localhost:8085/stock/addto", data, config);
+            const resonse = await instance.put("/stock/addto", data, config);
             console.log(resonse.data);
             setStockDtos([]);
             setStockOrder([]);

@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import instance from "../Service/AxiosHolder/AxiosHolder";
 
 function Product() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
@@ -36,7 +37,7 @@ function Product() {
 
     async function getCategory() {
         try {
-            const response = await axios.get("http://localhost:8085/category", config);
+            const response = await instance.get("/category", config);
             setCategories(response.data);
         } catch (error) {
             console.log(error);
@@ -45,7 +46,7 @@ function Product() {
 
     async function getProducts() {
         try {
-            const response = await axios.get("http://localhost:8085/items", config);
+            const response = await instance.get("/items", config);
             setProducts(response.data);
         } catch (error) {
             console.log(error);
@@ -61,7 +62,7 @@ function Product() {
                 categoryId: categoryId
             };
             try {
-                const response = await axios.post("http://localhost:8085/items", data, config);
+                const response = await instance.post("/items", data, config);
                 console.log(response.data);
                 getProducts();
                 clear();
@@ -85,7 +86,7 @@ function Product() {
                     categoryId: categoryId
                 };
                 try {
-                    const response = await axios.put(`http://localhost:8085/items/${editingProduct?.id}`, data, config);
+                    const response = await instance.put(`/items/${editingProduct?.id}`, data, config);
                     console.log(response.data);
                     getProducts();
                     clear();
@@ -102,7 +103,7 @@ function Product() {
             clear();
         } else {
             try {
-                await axios.delete(`http://localhost:8085/items/${productId}`, config);
+                await instance.delete(`/items/${productId}`, config);
                 getProducts();
             } catch (error) {
                 console.log(error);

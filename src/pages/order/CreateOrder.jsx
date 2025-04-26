@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import back from "../../assets/back.png";
+import instance from "../../Service/AxiosHolder/AxiosHolder";
 
 function CreateOrder() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
@@ -45,7 +46,7 @@ function CreateOrder() {
 
     async function getProducts() {
         try {
-            const response = await axios.get("http://localhost:8085/items", config);
+            const response = await instance.get("/items", config);
             setProducts(response.data);
         } catch (error) {
             console.log(error);
@@ -54,7 +55,7 @@ function CreateOrder() {
 
     async function getStocks() {
         try {
-            const response = await axios.get("http://localhost:8085/stock", config);
+            const response = await instance.get("/stock", config);
             setStocks(response.data);
         } catch (error) {
             console.log(error);
@@ -64,7 +65,7 @@ function CreateOrder() {
     async function getFromStock() {
         const data = stockDtos
         try {
-            const resonse = await axios.put("http://localhost:8085/stock/getfrom", data, config);
+            const resonse = await instance.put("/stock/getfrom", data, config);
             console.log(resonse.data);
             setStockDtos([]);
         } catch (error) {
@@ -77,7 +78,7 @@ function CreateOrder() {
             itemIds: order
         }
         try {
-            const resonse = await axios.post("http://localhost:8085/orders", data, config);
+            const resonse = await instance.post("/orders", data, config);
             console.log(resonse.data);
             setOrder([]);
         } catch (error) {

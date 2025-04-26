@@ -3,6 +3,7 @@ import Navbar from "../../components/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import instance from "../../Service/AxiosHolder/AxiosHolder";
 
 function Orders() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
@@ -26,7 +27,7 @@ function Orders() {
 
     async function getOrders() {
         try {
-            const response = await axios.get("http://localhost:8085/orders", config);
+            const response = await instance.get("/orders", config);
             setOrders(response.data);
         } catch (error) {
             console.log(error);
