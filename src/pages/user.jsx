@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import instance  from "../Service/AxiosHolder/AxiosHolder";
+import instance from "../Service/AxiosHolder/AxiosHolder";
+import Swal from 'sweetalert2';
 
 function User() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
@@ -15,14 +15,14 @@ function User() {
     const [password, setPassword] = useState("");
     const [userType, setUserType] = useState("");
     const [userId, setUserId] = useState(0);
-    const [Error, setError] = useState("");
+    const [error, setError] = useState("");
     const [isEditing, setIsEditing] = useState(false);
 
     const config = {
         headers: {
             Authorization: `Bearer ${jwtToken}`
         }
-    }
+    };
 
     useEffect(function () {
         if (isAuthenticated) {
@@ -30,9 +30,8 @@ function User() {
                 navigate("/");
             }
             getUsers();
-            console.log(usertype);
         }
-    }, [isAuthenticated])
+    }, [isAuthenticated]);
 
     async function getUsers() {
         try {
@@ -40,93 +39,132 @@ function User() {
             setUsers(response.data);
         } catch (error) {
             console.log(error);
+            Swal.fire({
+                title: "Error!",
+                text: "Failed to fetch users",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
         }
     }
 
     async function addUser() {
+        if (!validateForm()) return;
+
         const data = {
             username: username,
             password: password,
             fullname: fullname,
             userType: userType
-        }
+        };
         
         try {
-            const response = await instance.post("/users", data, config);
-            console.log(response.data);
+            await instance.post("/users", data, config);
+            Swal.fire({
+                title: "Success!",
+                text: "User added successfully",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
             getUsers();
             clear();
         } catch (error) {
             console.log(error);
+            setError(error.response?.data?.message || "Failed to add user");
         }
     }
 
     async function updateUser() {
+        if (!validateForm()) return;
+
         const data = {
             username: username,
             password: password,
             fullname: fullname,
             userType: userType
-        }
+        };
+
         try {
-            const response = await instance.put(`/users/${userId}`, data, config);
-            console.log(response.data);
+            await instance.put(`/users/${userId}`, data, config);
+            Swal.fire({
+                title: "Success!",
+                text: "User updated successfully",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
             getUsers();
             clear();
         } catch (error) {
             console.log(error);
+            setError(error.response?.data?.message || "Failed to update user");
         }
     }
 
     async function deleteUser(user) {
         if (user.userType.includes("admin") && usertype?.includes("manager")) {
             setError("You are not authorized to delete admin user.");
-        } else if(user.userType.includes("admin") && usertype?.includes("admin")) {
-            let count = 0;
-            for(let i=0; i<users.length; i++){
-                if(users[i].userType.includes("admin")) {
-                    count++;
-                }
-            }
+            return;
+        }
 
-            if(count > 1){
-                try {
-                    await instance.delete(`/users/${user.id}`, config);
-                    getUsers();
-                    clear();
-                } catch (error) {
-                    console.log(error);
-                }
-            } else {
-                setError("Can't delete the last admin user in the system")
+        if(user.userType.includes("admin") && usertype?.includes("admin")) {
+            const adminCount = users.filter(u => u.userType.includes("admin")).length;
+            if(adminCount <= 1){
+                setError("Can't delete the last admin user in the system");
+                return;
             }
-        } else {
+        }
+
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        if (result.isConfirmed) {
             try {
                 await instance.delete(`/users/${user.id}`, config);
+                Swal.fire(
+                    'Deleted!',
+                    'User has been deleted.',
+                    'success'
+                );
                 getUsers();
                 clear();
             } catch (error) {
                 console.log(error);
+                Swal.fire({
+                    title: "Error!",
+                    text: "Failed to delete user",
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
             }
         }
     }
 
-    function checkEmpty() {
-        if (fullname == "" || username == "" || password == "" || userType == "") {
+    function validateForm() {
+        if (!fullname || !username || !password || !userType) {
+            setError("All fields are required");
             return false;
-        } else {
-            return true;
         }
+
+        if (!checkUsernameDuplication()) {
+            setError("Username already exists");
+            return false;
+        }
+
+        return true;
     }
 
     function checkUsernameDuplication() {
-        let t = true;
-        for (let i = 0; i < users.length; i++) {
-            if (users[i].username == username && users[i].id != userId) {
-                t = false;
-            }
-        }
-        return t;
+        return !users.some(user => 
+            user.username === username && 
+            user.id !== userId
+        );
     }
 
     function clear() {
@@ -136,131 +174,182 @@ function User() {
         setUserType("");
         setUserId(0);
         setIsEditing(false);
+        setError("");
     }
 
-    function updatingUser(user) {
+    function startEditing(user) {
         setIsEditing(true);
         setFullName(user.fullname);
         setUsername(user.username);
         setPassword("");
         setUserType(user.userType);
         setUserId(user.id);
+        setError("");
     }
 
     return (
-        <div>
-            <div className="sticky top-0"><Navbar page="user" /></div>
-            <div className="">
-                <div className="grid grid-cols-1 pe-4 ">
-                    <div className="sticky top-20  w-full md:mt-10 bg-white border-2 border-purple-800 md:m-auto m-2 md:mx-2 p-2 md:px-10 rounded-lg text-center h-auto">
-                        <h2 className=" md:my-5 text-lg border-4 border-lime-400 rounded-md text-violet-800 font-bold">Add User</h2>
-
-                        <div className="md:flex gap-3 pb-5">
-                            <form className="w-full mx-auto md:flex gap-2 md:mt-0 ">
-                                <input type="text" value={fullname} onChange={(e) => { setFullName(e.target.value); setError(""); }} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2 " placeholder="Enter Full NAme" required />
-                                <input type="text" value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2 " placeholder="Enter Username" required />
-                                <input type="text" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2 " placeholder="Enter Password" required />
-                                {usertype?.includes("admin") ? (
-                                    <select onChange={(e) => { setUserType(e.target.value); setError(""); }} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2" value={userType} required>
-                                    <option value="">Select User Type</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="manager">Manager</option>
-                                    <option value="store">Store Keeper</option>
-                                    <option value="chashier">Cashier</option>
-                                </select>
-                                ) : (
-                                    <select onChange={(e) => { setUserType(e.target.value); setError(""); }} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2" value={userType} required>
-                                    <option value="">Select User Type</option>
-                                    <option value="manager">Manager</option>
-                                    <option value="store">Store Keeper</option>
-                                    <option value="chashier">Cashier</option>
-                                </select>
-                                )}
-                            </form>
-                            {isEditing ? (
-                                <button type="button" onClick={() => {
-                                    if (checkEmpty()) {
-                                        if (checkUsernameDuplication()) {
-                                            updateUser();
-                                        } else {
-                                            setError("Duplicate username. Please enter new username");
-                                        }
-                                    } else {
-                                        setError("All the fields must be fille to submit");
-                                    }
-                                }} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Update</button>
-                            ) : (
-                                <button type="button" onClick={() => {
-                                    if (checkEmpty()) {
-                                        if (checkUsernameDuplication()) {
-                                            addUser();
-                                        } else {
-                                            setError("Duplicate username. Please enter new username");
-                                        }
-                                    } else {
-                                        setError("All the fields must be fille to submit");
-                                    }
-                                }} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Save</button>
-                            )}
+        <div className="min-h-screen bg-gradient-to-br from-violet-50 to-blue-50">
+            <div className="sticky top-0 z-50">
+                <Navbar page="user" />
+            </div>
+            
+            <div className="container mx-auto px-4 py-8">
+                <h1 className="text-3xl font-bold text-violet-800 mb-8 text-center">User Management</h1>
+                
+                {/* Add/Edit User Card */}
+                <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
+                    <h2 className="text-xl font-semibold text-violet-700 mb-6 pb-2 border-b-2 border-lime-400">
+                        {isEditing ? "Edit User" : "Add New User"}
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="block text-sm font-medium text-violet-700 mb-2">Full Name</label>
+                            <input 
+                                type="text" 
+                                value={fullname} 
+                                onChange={(e) => setFullName(e.target.value)} 
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                                placeholder="Enter Full Name" 
+                            />
                         </div>
-                        <div className="text-red-500 text-sm">{Error}</div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-violet-700 mb-2">Username</label>
+                            <input 
+                                type="text" 
+                                value={username} 
+                                onChange={(e) => setUsername(e.target.value)} 
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                                placeholder="Enter Username" 
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-violet-700 mb-2">Password</label>
+                            <input 
+                                type="password" 
+                                value={password} 
+                                onChange={(e) => setPassword(e.target.value)} 
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                                placeholder="Enter Password" 
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-violet-700 mb-2">User Type</label>
+                            <select 
+                                value={userType} 
+                                onChange={(e) => setUserType(e.target.value)} 
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                            >
+                                <option value="">Select User Type</option>
+                                {usertype?.includes("admin") && <option value="admin">Admin</option>}
+                                <option value="manager">Manager</option>
+                                <option value="store">Store Keeper</option>
+                                <option value="chashier">Cashier</option>
+                            </select>
+                        </div>
                     </div>
-                    <div className="w-full  bg-white border-2 border-purple-800  m-2 md:mx-2 p-2 md:pb-10 md:px-10 rounded-lg text-center">
-                        <h2 className=" md:my-5 text-lg border-4 border-lime-400 rounded-md text-violet-800 font-bold">Users</h2>
-                        <div className="md:flex gap-3 ">
-                            <div className=" w-full overflow-x-auto shadow-md sm:rounded-lg">
-                                <table className="w-full border-separate border-spacing-1 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border-2 border-violet-600 rounded-lg">
-                                    <thead className="text-xs  text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                                        <tr className="border-2 border-violet-600">
-                                            <th scope="col" className="px-6 py-3 border-2 border-violet-600">
-                                                Full Name
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 border-2 border-violet-600">
-                                                Username
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 border-2 border-violet-600">
-                                                Password
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 border-2 border-violet-600">
-                                                User Type
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-center w-48 border-2 border-violet-600">
-                                                Action
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {users.map(function (user) {
-                                            return (
-                                                <tr className="bg-white border-2 border-violet-600 rounded-lg" key={user.id}>
-                                                    <td scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap  border-2 border-violet-600 rounded-lg">
-                                                        {user.fullname}
-                                                    </td>
-                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                        {user.username}
-                                                    </td>
-                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                        {user.password}
-                                                    </td>
-                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                        {user.userType}
-                                                    </td>
-                                                    <td className="pe-4 py-4 text-right border-2 border-violet-600 rounded-lg">
-                                                        <button type="button" onClick={()=>{setError("");updatingUser(user)}} className="w-20 md:me-1 py-1 bg-gradient-to-r from-green-600  to-lime-400 hover:bg-gradient-to-l md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:border-black">Edit</button>
-                                                        <button type="button" onClick={()=>{setError("");deleteUser(user)}} className="w-20 py-1 bg-gradient-to-r from-red-600 to-pink-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l  hover:border-black">Delete</button>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
+                    
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">
+                            {error}
                         </div>
+                    )}
+                    
+                    <div className="flex justify-end space-x-4">
+                        {isEditing && (
+                            <button 
+                                onClick={clear}
+                                className="px-6 py-2 border border-violet-600 text-violet-600 font-medium rounded-lg hover:bg-violet-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        )}
+                        <button 
+                            onClick={isEditing ? updateUser : addUser}
+                            className="px-6 py-2 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium rounded-lg hover:from-violet-700 hover:to-blue-700 transition-all shadow-md"
+                        >
+                            {isEditing ? "Update User" : "Add User"}
+                        </button>
+                    </div>
+                </div>
+                
+                {/* Users List Card */}
+                <div className="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 className="text-xl font-semibold text-violet-700 mb-6 pb-2 border-b-2 border-lime-400">Users List</h2>
+                    
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-violet-200">
+                            <thead className="bg-violet-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        Full Name
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        Username
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        User Type
+                                    </th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-violet-200">
+                                {users.length > 0 ? (
+                                    users.map(user => (
+                                        <tr key={user.id} className="hover:bg-violet-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-violet-900">
+                                                {user.fullname}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-violet-700">
+                                                {user.username}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-violet-700">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                                    user.userType === 'admin' ? 'bg-purple-100 text-purple-800' :
+                                                    user.userType === 'manager' ? 'bg-blue-100 text-blue-800' :
+                                                    user.userType === 'store' ? 'bg-green-100 text-green-800' :
+                                                    'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {user.userType}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex justify-end space-x-2">
+                                                    <button
+                                                        onClick={() => startEditing(user)}
+                                                        className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded-md hover:bg-blue-50 transition-colors"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteUser(user)}
+                                                        className="text-red-600 hover:text-red-800 px-3 py-1 rounded-md hover:bg-red-50 transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                                            No users found
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
 export default User;

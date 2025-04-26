@@ -16,22 +16,33 @@ function OrderHome() {
     }, [isAuthenticated]);
 
     return (
-        <div>
-            <Navbar page="order" />
-            <div>
-                <div className="grid grid-cols-1 pe-4 ">
-                    <div className="sticky top-20  w-full md:mt-10 bg-white border-2 border-purple-800 md:m-auto m-2 md:mx-2 p-2 md:px-10 rounded-lg text-center h-auto">
-                        <h2 className=" md:my-5 text-lg border-4 border-lime-400 rounded-md text-violet-800 font-bold">Order</h2>
-                        <div className="grid md:grid-cols-2 gap-3 pb-5 pt-2 md:item-center">
-                            <Link to="/order/orders">
-                                <button type="button" className="w-full s:me-4 md:mb-0 mb-2 px-6 py-3.5 text-base font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                                    Orders
-                                </button>
+        <div className="min-h-screen bg-gradient-to-br from-violet-50 to-blue-50">
+            <div className="sticky top-0 z-50">
+                <Navbar page="order" />
+            </div>
+            
+            <div className="container mx-auto px-4 py-8">
+                <h1 className="text-3xl font-bold text-violet-800 mb-8 text-center">Order Management</h1>
+                
+                <div className="max-w-md mx-auto">
+                    <div className="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 className="text-xl font-semibold text-violet-700 mb-6 pb-2 border-b-2 border-lime-400 text-center">
+                            Order Options
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 gap-4">
+                            <Link 
+                                to="/order/orders" 
+                                className="block px-6 py-4 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium rounded-lg hover:from-violet-700 hover:to-blue-700 transition-all shadow-md text-center"
+                            >
+                                View All Orders
                             </Link>
-                            <Link to="/order/createorder"> 
-                                <button type="button" className="w-full px-6 py-3.5 text-base font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                                    Create Order
-                                </button>
+                            
+                            <Link 
+                                to="/order/createorder"
+                                className="block px-6 py-4 bg-gradient-to-r from-green-600 to-teal-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-teal-700 transition-all shadow-md text-center"
+                            >
+                                Create New Order
                             </Link>
                         </div>
                     </div>
