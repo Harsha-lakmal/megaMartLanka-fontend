@@ -246,8 +246,7 @@ function User() {
                                 <option value="">Select User Type</option>
                                 {usertype?.includes("admin") && <option value="admin">Admin</option>}
                                 <option value="manager">Manager</option>
-                                <option value="store">Store Keeper</option>
-                                <option value="chashier">Cashier</option>
+                                <option value="User">User</option>
                             </select>
                         </div>
                     </div>
