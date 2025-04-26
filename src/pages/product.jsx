@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import instance from "../Service/AxiosHolder/AxiosHolder";
+import Swal from 'sweetalert2';
 
 function Product() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
@@ -41,6 +41,12 @@ function Product() {
             setCategories(response.data);
         } catch (error) {
             console.log(error);
+            Swal.fire({
+                title: "Error!",
+                text: "Failed to fetch categories",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
         }
     }
 
@@ -50,25 +56,38 @@ function Product() {
             setProducts(response.data);
         } catch (error) {
             console.log(error);
+            Swal.fire({
+                title: "Error!",
+                text: "Failed to fetch products",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
         }
     }
 
     async function handleSubmit() {
-        if (checkEmpty()) {
-            const data = {
-                name: productName,
-                description: productDescription,
-                price: productPrice,
-                categoryId: categoryId
-            };
-            try {
-                const response = await instance.post("/items", data, config);
-                console.log(response.data);
-                getProducts();
-                clear();
-            } catch (error) {
-                console.log(error);
-            }
+        if (!checkEmpty()) return;
+
+        const data = {
+            name: productName,
+            description: productDescription,
+            price: productPrice,
+            categoryId: categoryId
+        };
+
+        try {
+            await instance.post("/items", data, config);
+            Swal.fire({
+                title: "Success!",
+                text: "Product added successfully",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
+            getProducts();
+            clear();
+        } catch (error) {
+            console.log(error);
+            setError(error.response?.data?.message || "Failed to add product");
         }
     }
 
@@ -77,38 +96,58 @@ function Product() {
             setError("You are not authorized to edit product");
             setEditingProduct(null);
             clear();
-        } else {
-            if (checkEmpty()) {
-                const data = {
-                    name: productName,
-                    description: productDescription,
-                    price: productPrice,
-                    categoryId: categoryId
-                };
-                try {
-                    const response = await instance.put(`/items/${editingProduct?.id}`, data, config);
-                    console.log(response.data);
-                    getProducts();
-                    clear();
-                } catch (error) {
-                    console.log(error);
-                }
-            }
+            return;
+        }
+
+        if (!checkEmpty()) return;
+
+        const data = {
+            name: productName,
+            description: productDescription,
+            price: productPrice,
+            categoryId: categoryId
+        };
+
+        try {
+            await instance.put(`/items/${editingProduct?.id}`, data, config);
+            Swal.fire({
+                title: "Success!",
+                text: "Product updated successfully",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
+            getProducts();
+            clear();
+        } catch (error) {
+            console.log(error);
+            setError(error.response?.data?.message || "Failed to update product");
         }
     }
 
     async function deleteProduct(productId) {
         if (usertype?.includes("store")) {
             setError("You are not authorized to delete product");
-            clear();
-        } else {
-            try {
-                await instance.delete(`/items/${productId}`, config);
-                getProducts();
-            } catch (error) {
-                console.log(error);
-            }
-        } 
+            return;
+        }
+
+        try {
+            await instance.delete(`/items/${productId}`, config);
+            Swal.fire({
+                title: "Success!",
+                text: "Product deleted successfully",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
+            getProducts();
+        } catch (error) {
+            console.log(error);
+            Swal.fire({
+                title: "Error!",
+                text: "Failed to delete product",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
+        }
     }
 
     function clear() {
@@ -117,16 +156,15 @@ function Product() {
         setProductDescription("");
         setProductPrice(0.0);
         setEditingProduct(null);
+        setError("");
     }
 
     function checkEmpty() {
         if (productName === "" || productDescription === "" || productPrice === 0 || productPrice === 0.0 || categoryId === 0) {
-            setError("Fields can't be Empty..");
+            setError("All fields are required");
             return false;
         }
-        else {
-            return true;
-        }
+        return true;
     }
 
     function handlePrice(e) {
@@ -143,85 +181,163 @@ function Product() {
     }
 
     return (
-        <div>
-            <div className="sticky top-0"><Navbar page="product" /></div>
-            <div className="">
-                <div className="grid grid-cols-1 pe-4 ">
-                    <div className="sticky top-20  w-full md:mt-10 bg-white border-2 border-purple-800 md:m-auto m-2 md:mx-2 p-2 md:px-10 rounded-lg text-center h-auto">
-                        {editingProduct ? (<h2 className=" md:my-5 text-lg border-4 border-lime-400 rounded-md text-violet-800 font-bold">Edit Product</h2>) : (<h2 className=" md:my-5 text-lg border-4 border-lime-400 rounded-md text-violet-800 font-bold">Add Product</h2>)}
-                        <div className="md:flex gap-3 pb-5">
-                            <form className="w-full mx-auto md:flex gap-2 md:mt-0 ">
-                                <input type="text" onChange={(e) => { setProductName(e.target.value); setError(""); }} value={productName} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2 " placeholder="Enter Product Name" />
-                                <input type="text" onChange={(e) => { setProductDescription(e.target.value); setError(""); }} value={productDescription} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2 " placeholder="Enter Product Description" />
-                                <input type="text" onChange={handlePrice} value={productPrice} className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2 " placeholder="Enter Price" />
-                                <select className="bg-white w-full mt-2 md:mt-0 rounded-lg text-sm p-2 ring-2" onChange={(e) => { setCategoryId(parseInt(e.target.value)); setError(""); }} value={categoryId}>
-                                    {productName === "" ? (<option value="">Select Category</option>) : (<option value={0}>Select Category</option>)}
-                                    {categories.map(function (category) {
-                                        return (
-                                            <option key={category.id} value={category.id}>{category.name}</option>
-                                        );
-                                    })}
-                                </select>
-                            </form>
-                            {editingProduct ? (
-                                <button type="button" onClick={updateProduct} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Update</button>
-                            ) : (
-                                <button type="button" onClick={handleSubmit} className="w-40 bg-gradient-to-br from-purple-600 to-blue-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l from-purple-600 to-blue-500 hover:border-black">Save</button>
-                            )}
+        <div className="min-h-screen bg-gradient-to-br from-violet-50 to-blue-50">
+            <div className="sticky top-0 z-50">
+                <Navbar page="product" />
+            </div>
+            
+            <div className="container mx-auto px-4 py-8">
+                <h1 className="text-3xl font-bold text-violet-800 mb-8 text-center">Product Management</h1>
+                
+                {/* Add/Edit Product Card */}
+                <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
+                    <h2 className="text-xl font-semibold text-violet-700 mb-6 pb-2 border-b-2 border-lime-400">
+                        {editingProduct ? "Edit Product" : "Add New Product"}
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-violet-700 mb-2">Product Name</label>
+                            <input 
+                                type="text" 
+                                onChange={(e) => { setProductName(e.target.value); setError(""); }} 
+                                value={productName} 
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                                placeholder="Product Name" 
+                            />
                         </div>
-                        <div className="text-sm text-red-600">{error}</div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-violet-700 mb-2">Description</label>
+                            <input 
+                                type="text" 
+                                onChange={(e) => { setProductDescription(e.target.value); setError(""); }} 
+                                value={productDescription} 
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                                placeholder="Description" 
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-violet-700 mb-2">Price (LKR)</label>
+                            <input 
+                                type="number" 
+                                onChange={handlePrice} 
+                                value={productPrice} 
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                                placeholder="Price" 
+                                step="0.01"
+                                min="0"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-violet-700 mb-2">Category</label>
+                            <select 
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                                onChange={(e) => { setCategoryId(parseInt(e.target.value)); setError(""); }} 
+                                value={categoryId}
+                            >
+                                <option value={0}>Select Category</option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={category.id}>{category.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                    <div className="w-full  bg-white border-2 border-purple-800  m-2 md:mx-2 p-2 md:pb-10 md:px-10 rounded-lg text-center">
-                        <h2 className=" md:my-5 text-lg border-4 border-lime-400 rounded-md text-violet-800 font-bold">Products</h2>
-                        <div className="md:flex gap-3 ">
-                            <div className=" w-full overflow-x-auto shadow-md sm:rounded-lg">
-                                <table className="w-full border-separate border-spacing-1 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 border-2 border-violet-600 rounded-lg">
-                                    <thead className="text-xs  text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                                        <tr className="border-2 border-violet-600">
-                                            <th scope="col" className="px-6 py-3 border-2 border-violet-600">
-                                                Product Name
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 border-2 border-violet-600">
-                                                Description
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 border-2 border-violet-600">
-                                                Category
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 border-2 border-violet-600">
-                                                Price (rs/=)
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-center w-48 border-2 border-violet-600">
-                                                Action
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {products.map(function (product) {
-                                            return (
-                                                <tr key={product.id} className="bg-white border-2 border-violet-600 rounded-lg">
-                                                    <td scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap  border-2 border-violet-600 rounded-lg">
-                                                        {product.name}
-                                                    </td>
-                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                        {product.description}
-                                                    </td>
-                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                        {product.category.name}
-                                                    </td>
-                                                    <td className="px-6 py-4 border-2 border-violet-600 rounded-lg">
-                                                        {product.price}
-                                                    </td>
-                                                    <td className="pe-4 py-4 text-right border-2 border-violet-600 rounded-lg">
-                                                        <button type="button" onClick={() => getEditProduct(product)} className="w-20 md:me-1 py-1 bg-gradient-to-r from-green-300 via-green-500 to-green-700 hover:bg-gradient-to-br md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:border-black">Edit</button>
-                                                        <button type="button" onClick={() => deleteProduct(product.id)} className="w-20 py-1 bg-gradient-to-r from-red-800 to-pink-500 md:mt-0 mt-2 rounded-xl border-2 border-yellow-400 text-white font-semibold hover:bg-gradient-to-l  hover:border-black">Delete</button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
+                    
+                    {error && (
+                        <div className="mt-4 text-sm text-red-600 p-2 bg-red-50 rounded-lg">
+                            {error}
                         </div>
+                    )}
+                    
+                    <div className="mt-6 flex justify-end space-x-4">
+                        {editingProduct && (
+                            <button 
+                                onClick={clear}
+                                className="px-6 py-2 border border-violet-600 text-violet-600 font-medium rounded-lg hover:bg-violet-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        )}
+                        <button 
+                            onClick={editingProduct ? updateProduct : handleSubmit}
+                            className="px-6 py-2 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium rounded-lg hover:from-violet-700 hover:to-blue-700 transition-all shadow-md"
+                        >
+                            {editingProduct ? "Update Product" : "Add Product"}
+                        </button>
+                    </div>
+                </div>
+                
+                {/* Product List Card */}
+                <div className="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 className="text-xl font-semibold text-violet-700 mb-6 pb-2 border-b-2 border-lime-400">Product List</h2>
+                    
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-violet-200">
+                            <thead className="bg-violet-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        Product Name
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        Description
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        Category
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        Price (LKR)
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-violet-700 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-violet-200">
+                                {products.length > 0 ? (
+                                    products.map((product) => (
+                                        <tr key={product.id} className="hover:bg-violet-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-violet-900">
+                                                {product.name}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-violet-700">
+                                                {product.description}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-violet-700">
+                                                {product.category.name}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-violet-700">
+                                                {product.price.toFixed(2)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex justify-end space-x-2">
+                                                    <button
+                                                        onClick={() => getEditProduct(product)}
+                                                        className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded-md hover:bg-blue-50 transition-colors"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteProduct(product.id)}
+                                                        className="text-red-600 hover:text-red-800 px-3 py-1 rounded-md hover:bg-red-50 transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                                            No products found
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

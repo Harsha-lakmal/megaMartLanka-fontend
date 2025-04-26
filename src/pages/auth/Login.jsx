@@ -3,9 +3,7 @@ import logo from "../../assets/magamarketlk.png";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import instance from "../../Service/AxiosHolder/AxiosHolder";
-import Swal from 'sweetalert2'
-
-
+import Swal from 'sweetalert2';
 
 function Login() {
     const { login } = useAuth();
@@ -15,6 +13,23 @@ function Login() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
+    function showSuccess() {
+        Swal.fire({
+            title: "Success!",
+            text: "You have successfully logged in.",
+            icon: "success",
+            confirmButtonText: "OK"
+        });
+    }
+
+    function showError(message) {
+        Swal.fire({
+            title: "Error!",
+            text: message || "An error occurred during login.",
+            icon: "error",
+            confirmButtonText: "OK"
+        });
+    }
 
     async function submit(event) {
         event.preventDefault();
@@ -33,11 +48,13 @@ function Login() {
             setIsLoading(true);
             const response = await instance.post("/login", data);
             login(response.data);
-          
+            showSuccess();
             navigate("/");
-        } catch (error) {
-            console.log(error);
-            setError(error.response?.data?.message || "Invalid username or password");
+        } catch (err) {
+            console.log(err);
+            const errorMessage = err.response?.data?.message || "Invalid username or password";
+            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setIsLoading(false);
         }
