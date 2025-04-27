@@ -275,6 +275,8 @@ function Product() {
                                 value={productName} 
                                 className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
                                 placeholder="Product Name" 
+
+                                
                             />
                         </div>
                         
