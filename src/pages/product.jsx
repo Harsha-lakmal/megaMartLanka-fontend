@@ -9,7 +9,6 @@ function Product() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
-
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [editingProduct, setEditingProduct] = useState(null);
@@ -69,6 +68,11 @@ function Product() {
 
     async function handleSubmit() {
         if (!checkEmpty()) return;
+        
+        if (!selectedFile) {
+            setError("Please select an image for the product");
+            return;
+        }
 
         const data = {
             name: productName,
@@ -79,21 +83,23 @@ function Product() {
 
         try {
             const response = await instance.post("/items", data, config);
-            Swal.fire({
-                title: "Success!",
-                text: "Product added successfully",
-                icon: "success",
-                confirmButtonText: "OK"
-            });
-
-            console.log(response.data.id);
             
-            if (selectedFile && response.data.id) {
-                await uploadImage(response.data.id);
+            const uploadSuccess = await uploadImage(response.data.id);
+            
+            if (uploadSuccess) {
+                Swal.fire({
+                    title: "Success!",
+                    text: "Product added successfully",
+                    icon: "success",
+                    confirmButtonText: "OK"
+                });
+                
+                getProducts();
+                clear();
+            } else {
+                await instance.delete(`/items/${response.data.id}`, config);
+                setError("Failed to upload image. Product was not added.");
             }
-            
-            getProducts();
-            clear();
         } catch (error) {
             console.log(error);
             setError(error.response?.data?.message || "Failed to add product");
@@ -105,40 +111,27 @@ function Product() {
     };
 
     async function uploadImage(productId) {
-        console.log(productId);
-        
         if (!selectedFile) {
-            Swal.fire({
-                title: "Warning",
-                text: "Please select an image to upload",
-                icon: "warning",
-                confirmButtonText: "OK"
-            });
-            return;
+            setError("Please select an image to upload");
+            return false;
         }
 
         const formData = new FormData();
-        file.append("image", selectedFile);
+        formData.append("file", selectedFile);
 
         try {
-            const response = await instance.post(`/upload/${productId}`, file, {
+            const response = await instance.post(`/upload/${productId}`, formData, {
                 headers: {
                     ...config.headers,
                     'Content-Type': 'multipart/form-data'
                 }
             });
             
-            Swal.fire({
-                title: "Success!",
-                text: "Image uploaded successfully",
-                icon: "success",
-                confirmButtonText: "OK"
-            });
-            
             setSelectedFile(null);
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
+            return true;
         } catch (error) {
             console.log(error);
             Swal.fire({
@@ -147,6 +140,7 @@ function Product() {
                 icon: "error",
                 confirmButtonText: "OK"
             });
+            return false;
         }
     }
 
@@ -170,9 +164,12 @@ function Product() {
         try {
             await instance.put(`/items/${editingProduct?.id}`, data, config);
             
-            // If a file is selected, upload it for the edited product
-            if (selectedFile && editingProduct?.id) {
-                await uploadImage(editingProduct.id);
+            if (selectedFile) {
+                const uploadSuccess = await uploadImage(editingProduct.id);
+                if (!uploadSuccess) {
+                    setError("Product updated but failed to update image");
+                    return;
+                }
             }
             
             Swal.fire({
@@ -320,30 +317,29 @@ function Product() {
                         </div>
                     </div>
                     
-                    {/* Image Upload Section */}
+                    {/* Image Upload Section - Improved styling */}
                     <div className="mt-4">
                         <label className="block text-sm font-medium text-violet-700 mb-2">
                             {editingProduct ? "Update Product Image" : "Product Image"}
                         </label>
                         <div className="flex items-center space-x-4">
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileChange}
-                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
-                                accept="image/*"
-                            />
-                            {editingProduct && (
-                                <button
-                                    onClick={() => uploadImage(editingProduct.id)}
-                                    className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-all shadow-md"
-                                >
-                                    Upload Image
-                                </button>
-                            )}
+                            <div className="w-full">
+                                <label className="flex items-center justify-center w-full px-4 py-2 border border-violet-300 rounded-lg cursor-pointer hover:bg-violet-50 transition-colors">
+                                    <span className="font-medium text-violet-600">
+                                        {selectedFile ? selectedFile.name : (editingProduct ? "Upload New Image" : "Select Image")}
+                                    </span>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept="image/*"
+                                    />
+                                </label>
+                            </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                            {selectedFile ? `Selected file: ${selectedFile.name}` : "Select an image for the product"}
+                            {selectedFile ? `Selected file: ${selectedFile.name}` : "Image is required for product"}
                         </p>
                     </div>
                     
@@ -371,7 +367,7 @@ function Product() {
                     </div>
                 </div>
                 
-                {/* Product List Card */}
+                {/* Product List Card - Now showing images */}
                 <div className="bg-white p-6 rounded-xl shadow-lg">
                     <h2 className="text-xl font-semibold text-violet-700 mb-6 pb-2 border-b-2 border-lime-400">Product List</h2>
                     
@@ -379,6 +375,7 @@ function Product() {
                         <table className="min-w-full divide-y divide-violet-200">
                             <thead className="bg-violet-50">
                                 <tr>
+                            
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-violet-700 uppercase tracking-wider">
                                         Product Name
                                     </th>
@@ -432,7 +429,7 @@ function Product() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                                        <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
                                             No products found
                                         </td>
                                     </tr>
