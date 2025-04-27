@@ -31,7 +31,7 @@ function Home() {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome header */}
         <div className="text-center mb-12">
-          <p className="text-lg text-violet-600">Manage your inventory and orders</p>
+           <p className="text-lg text-violet-600">Manage your inventory and orders</p>
         </div>
         
         {/* Menu grid */}

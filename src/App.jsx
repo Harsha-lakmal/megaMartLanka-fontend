@@ -7,9 +7,10 @@ import Orders from './pages/order/Orders';
 import CreateOrder from './pages/order/CreateOrder';
 import Stock from './pages/stock';
 import User from './pages/user';
-import Login from './pages/auth/Login';
+import Login from './pages/login/Login';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
         <Routes>
           <Route element={<ProtectedRoute />}>
           <Route path='/*' element={<Login />} />
-            <Route path='/' element={<Home />} />
+            <Route path='/home' element={<Home />} />
             <Route path='/category' element={<Category />} />
             <Route path='/product' element={<Product />} />
             <Route path='/order' element={<OrderHome />} />
@@ -26,11 +27,13 @@ function App() {
             <Route path='/order/createorder' element={<CreateOrder />} />
             <Route path='/stock' element={<Stock />} />
             <Route path='/user' element={<User />} />
+            <Route path='/error' element={<NotFoundPage />} />
           </Route>
           <Route path='/login' element={<Login />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+
   );
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -8,10 +8,12 @@ import Swal from 'sweetalert2';
 function Product() {
     const { isAuthenticated, jwtToken, usertype } = useAuth();
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
 
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const [productName, setProductName] = useState("");
     const [productDescription, setProductDescription] = useState("");
@@ -49,7 +51,7 @@ function Product() {
             });
         }
     }
-
+  
     async function getProducts() {
         try {
             const response = await instance.get("/items", config);
@@ -76,18 +78,75 @@ function Product() {
         };
 
         try {
-            await instance.post("/items", data, config);
+            const response = await instance.post("/items", data, config);
             Swal.fire({
                 title: "Success!",
                 text: "Product added successfully",
                 icon: "success",
                 confirmButtonText: "OK"
             });
+
+            console.log(response.data.id);
+            
+            if (selectedFile && response.data.id) {
+                await uploadImage(response.data.id);
+            }
+            
             getProducts();
             clear();
         } catch (error) {
             console.log(error);
             setError(error.response?.data?.message || "Failed to add product");
+        }
+    }
+
+    const handleFileChange = (event) => {
+        setSelectedFile(event.target.files[0]);
+    };
+
+    async function uploadImage(productId) {
+        console.log(productId);
+        
+        if (!selectedFile) {
+            Swal.fire({
+                title: "Warning",
+                text: "Please select an image to upload",
+                icon: "warning",
+                confirmButtonText: "OK"
+            });
+            return;
+        }
+
+        const formData = new FormData();
+        file.append("image", selectedFile);
+
+        try {
+            const response = await instance.post(`/upload/${productId}`, file, {
+                headers: {
+                    ...config.headers,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            
+            Swal.fire({
+                title: "Success!",
+                text: "Image uploaded successfully",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
+            
+            setSelectedFile(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        } catch (error) {
+            console.log(error);
+            Swal.fire({
+                title: "Error!",
+                text: "Failed to upload image",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
         }
     }
 
@@ -110,12 +169,19 @@ function Product() {
 
         try {
             await instance.put(`/items/${editingProduct?.id}`, data, config);
+            
+            // If a file is selected, upload it for the edited product
+            if (selectedFile && editingProduct?.id) {
+                await uploadImage(editingProduct.id);
+            }
+            
             Swal.fire({
                 title: "Success!",
                 text: "Product updated successfully",
                 icon: "success",
                 confirmButtonText: "OK"
             });
+            
             getProducts();
             clear();
         } catch (error) {
@@ -156,7 +222,11 @@ function Product() {
         setProductDescription("");
         setProductPrice(0.0);
         setEditingProduct(null);
+        setSelectedFile(null);
         setError("");
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     }
 
     function checkEmpty() {
@@ -178,6 +248,10 @@ function Product() {
         setProductDescription(product.description);
         setProductPrice(product.price);
         setCategoryId(product.category.id);
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     }
 
     return (
@@ -244,6 +318,33 @@ function Product() {
                                 ))}
                             </select>
                         </div>
+                    </div>
+                    
+                    {/* Image Upload Section */}
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-violet-700 mb-2">
+                            {editingProduct ? "Update Product Image" : "Product Image"}
+                        </label>
+                        <div className="flex items-center space-x-4">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="w-full px-4 py-2 border border-violet-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                                accept="image/*"
+                            />
+                            {editingProduct && (
+                                <button
+                                    onClick={() => uploadImage(editingProduct.id)}
+                                    className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-all shadow-md"
+                                >
+                                    Upload Image
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {selectedFile ? `Selected file: ${selectedFile.name}` : "Select an image for the product"}
+                        </p>
                     </div>
                     
                     {error && (

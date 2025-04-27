@@ -48,8 +48,18 @@ function Login() {
             setIsLoading(true);
             const response = await instance.post("/login", data);
             login(response.data);
+            console.log(response.data.usertype);
+
+            
             showSuccess();
-            navigate("/");
+            if(response.data.usertype == "admin" || response.data.usertype == "manager"){
+                navigate("/home");
+
+            }else{
+                navigate("/error");
+
+
+            }
         } catch (err) {
             console.log(err);
             const errorMessage = err.response?.data?.message || "Invalid username or password";

@@ -34,7 +34,7 @@ function Navbar(data) {
                             {data.page.includes("home") ? (
                                 <a href="#" className="block py-2 px-3 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-400 md:p-0">Home</a>
                             ) : (
-                                <a href="/" className="block py-2 px-3 text-white rounded hover:bg-gray-700 md:hover:bg-transparent md:border-0 md:hover:text-blue-400 md:p-0">Home</a>
+                                <a href="/home" className="block py-2 px-3 text-white rounded hover:bg-gray-700 md:hover:bg-transparent md:border-0 md:hover:text-blue-400 md:p-0">Home</a>
                             )}
                         </li>
                         <li className="md:pt-2">

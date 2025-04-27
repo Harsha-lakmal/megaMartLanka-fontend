@@ -46,6 +46,8 @@ function Category() {
     }
 
     async function deleteCategory(id) {
+        console.log(id);
+        
         try {
             const result = await Swal.fire({
                 title: 'Are you sure?',
@@ -58,7 +60,7 @@ function Category() {
             });
 
             if (result.isConfirmed) {
-                await instance.delete(`/category/${id}`, config);
+                await instance.delete(`/category/deelete/${id}`, config);
                 await Swal.fire(
                     'Deleted!',
                     'Category has been deleted.',
@@ -102,7 +104,7 @@ function Category() {
         }
 
         try {
-            await instance.put(`/category/${editingId}`, data, config);
+            await instance.put(`/update/category/${editingId}`, data, config);
             Swal.fire({
                 title: "Success!",
                 text: "Category updated successfully",
